@@ -4,6 +4,7 @@ import os
 import time
 import onnxruntime as ort
 import numpy as np
+from transformers import AutoTokenizer
 from app.config import get_settings
 from app.provider.model_provider import ModelProvider
 
@@ -33,6 +34,7 @@ class OnnxModelProvider(ModelProvider):
             self.session = None
             self.model_loaded = False
             self.model_load_time = 0
+            self.tokenizer = None
 
             # 모델 로드 시도
             self.load_model()
@@ -48,6 +50,9 @@ class OnnxModelProvider(ModelProvider):
         try:
             logger.info(f"ONNX 모델 로딩 중: {self.model_path}")
             start_time = time.time()
+
+            # 토크나이저 로드
+            self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct", trust_remote_code=True)
 
             # ONNX Runtime 세션 옵션 설정
             session_options = ort.SessionOptions()
@@ -100,35 +105,75 @@ class OnnxModelProvider(ModelProvider):
         Returns:
             Dict[str, Any]: 모델 출력 데이터
         """
+        logger.info(f"onnx run_inference 호출")
         if not self.is_loaded():
             logger.error("모델이 로드되지 않았습니다.")
             return None
 
         try:
-            # ONNX 모델의 입력 형식에 맞게 처리
+            # 입력 데이터 준비
             prompt = input_data.get("prompt", "")
             temperature = input_data.get("temperature", 0.7)
             max_tokens = input_data.get("max_tokens", 1000)
 
-            # 입력 데이터 준비 (예시 - 실제 모델의 입력 형식에 맞게 수정 필요)
-            onnx_inputs = {
-                "input": np.array([prompt], dtype=np.str_),
-                "temperature": np.array([temperature], dtype=np.float32),
-                "max_tokens": np.array([max_tokens], dtype=np.int32)
-            }
+            # 토크나이저로 입력 처리
+            inputs = self.tokenizer(prompt, return_tensors="np", padding=False)
+            input_ids = inputs["input_ids"].astype(np.int64)
+            attention_mask = inputs["attention_mask"].astype(np.int64)
 
-            # 모델 실행
-            outputs = self.session.run(None, onnx_inputs)
+            # 초기 생성 ID 설정
+            generated_ids = input_ids.copy()
 
-            # 출력 처리 (예시 - 실제 모델의 출력 형식에 맞게 수정 필요)
-            response_text = outputs[0][0]
+            # 종료 토큰 ID 가져오기
+            eos_token_id = self.tokenizer.eos_token_id or self.tokenizer.convert_tokens_to_ids("<|endoftext|>")
+
+            # 출력 이름 가져오기
+            output_names = [o.name for o in self.session.get_outputs()]
+
+            logger.info(f"🧠 생성 시작: 최대 {max_tokens} 토큰")
+
+            # 토큰 생성 루프
+            for step in range(max_tokens):
+                seq_len = generated_ids.shape[1]
+
+                # position_ids 직접 생성
+                position_ids = np.arange(seq_len)[None, :].astype(np.int64)
+
+                # ONNX 입력 구성
+                onnx_inputs = {
+                    "input_ids": generated_ids.astype(np.int64),
+                    "attention_mask": np.ones_like(generated_ids, dtype=np.int64),
+                    "position_ids": position_ids,
+                }
+
+                # 추론
+                outputs = self.session.run(output_names, onnx_inputs)
+                logits = outputs[0]  # shape: (1, seq_len, vocab_size)
+
+                # 마지막 토큰에서 최고 확률 토큰 추출
+                next_token_id = int(np.argmax(logits[:, -1, :], axis=-1)[0])
+
+                # 종료 조건
+                if next_token_id == eos_token_id:
+                    logger.info("🛑 종료 토큰 생성됨!")
+                    break
+
+                # 다음 토큰 추가
+                next_token_arr = np.array([[next_token_id]])
+                generated_ids = np.concatenate([generated_ids, next_token_arr], axis=-1)
+
+                logger.info(f"step: {step}")
+
+            # 결과 디코딩
+            output_text = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+            logger.info(f"📘 생성된 문장: {output_text}")
 
             return {
-                "text": response_text,
+                "text": output_text,
                 "usage": {
-                    "prompt_tokens": len(prompt.split()),
-                    "completion_tokens": len(response_text.split()),
-                    "total_tokens": len(prompt.split()) + len(response_text.split())
+                    "prompt_tokens": len(input_ids[0]),
+                    "completion_tokens": len(generated_ids[0]) - len(input_ids[0]),
+                    "total_tokens": len(generated_ids[0])
                 }
             }
         except Exception as e:

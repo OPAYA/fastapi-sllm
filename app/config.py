@@ -11,13 +11,13 @@ class Settings(BaseSettings):
     MODEL_PATH: str = os.path.join("models", "phi-2.q4_k_m.gguf")
 
     # ONNX 설정
-    ONNX_MODEL_PATH: str = os.path.join("models", "qwen25.onnx")
-    DEFAULT_ONNX_MODEL: str = "qwen25"
+    ONNX_MODEL_PATH: str = os.path.join("models", "onnx_qwen25.onnx")
+    DEFAULT_ONNX_MODEL: str = "onnx_qwen25"
 
     # 기본 모델 설정
     DEFAULT_MODEL: str = "gemma-1.1-2b-it"
     DEFAULT_TEMPERATURE: float = 0.1
-    DEFAULT_MAX_TOKENS: int = 1000
+    DEFAULT_MAX_TOKENS: int = 200
 
     class Config:
         env_file = ".env"

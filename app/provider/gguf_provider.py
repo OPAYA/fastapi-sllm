@@ -82,6 +82,7 @@ class GGUFModelProvider(ModelProvider):
         Returns:
             Dict[str, Any]: 모델 출력 데이터
         """
+        logger.info(f"gguf run_inference 호출")
         if not self.is_loaded():
             logger.error("모델이 로드되지 않았습니다.")
             return None
