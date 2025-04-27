@@ -44,6 +44,49 @@ MAX_HISTORY_LENGTH=100
 PAGE_SIZE=20
 ```
 
+## 모델 설정
+
+### 모델 파일 구조
+```
+models/
+│   ├── qwen-1.5-0.5b.gguf
+│   ├── qwen-2.5-0.5b.onnx
+```
+
+### 모델 다운로드
+1. GGUF 모델
+```bash
+# models/gguf 디렉토리에 모델 파일 다운로드
+wget https://huggingface.co/Qwen/Qwen-1_5-0_5B-GGUF/resolve/main/qwen-1.5-0.5b.gguf -O models/qwen-1.5-0.5b.gguf
+```
+
+2. ONNX 모델
+```bash
+# models/onnx 디렉토리에 모델 파일 다운로드
+wget https://huggingface.co/Qwen/Qwen-2_5-0_5B-ONNX/resolve/main/model.onnx -O models/qwen-2.5-0.5b.onnx
+```
+
+### 모델 사용
+1. 환경 변수 설정
+```bash
+# .env 파일에 모델 경로 설정
+MODEL_PATH=models/gguf/qwen-1.5-0.5b.gguf  # GGUF 모델 사용 시
+MODEL_PATH=models/onnx/qwen-2.5-0.5b.onnx  # ONNX 모델 사용 시
+```
+
+2. API 요청 시 모델 지정
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "안녕하세요"
+    }
+  ],
+  "model": "qwen-1.5-0.5b"  // 또는 "qwen-2.5-0.5b"
+}
+```
+
 ## 실행 방법
 
 개발 서버 실행:
@@ -102,8 +145,6 @@ fastapi-sllm-api/
 ├── pyproject.toml          # Poetry 설정
 └── README.md               # 프로젝트 문서
 ```
-
-
 
 ## 프롬프트 템플릿
 
