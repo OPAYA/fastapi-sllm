@@ -34,12 +34,6 @@ curl -sSL https://install.python-poetry.org | python3 -
 poetry install
 ```
 
-### 4. 환경 변수 설정
-`.env` 파일을 프로젝트 루트 디렉토리에 생성하고 다음과 같이 설정합니다:
-```
-
-## 실행 방법
-
 ### 기본 실행
 ```bash
 ./run.sh
@@ -49,10 +43,6 @@ poetry install
 poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 배포 환경 실행
-```bash
-poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-```
 
 ## 프로젝트 구조
 
