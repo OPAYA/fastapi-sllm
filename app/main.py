@@ -7,9 +7,11 @@ from app.v3.routers import chat as chat_v3
 from app.v3.routers import prompt as prompt_v3
 from app.v4.routers import chat as chat_v4
 from app.v4.routers import prompt as prompt_v4
+from app.v5.routers import vision as vision_v5
 from app.v1.models.chat import Message, MessageRole
 from app.config import get_settings
 from app.provider.sllm_provider import LlamaModelProvider, get_model_info
+from app.provider.vision_provider import VisionModelProvider, get_vision_model_info
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,7 @@ app.include_router(chat_v3.router, prefix="/api/v3", tags=["chat-v3"])
 app.include_router(prompt_v3.router, prefix="/api/v3/prompt", tags=["prompt-v3"])
 app.include_router(chat_v4.router, prefix="/api/v4", tags=["chat-v4"])
 app.include_router(prompt_v4.router, prefix="/api/v4/prompt", tags=["prompt-v4"])
+app.include_router(vision_v5.router, prefix="/api/v5", tags=["vision-v5"])
 
 
 @app.on_event("startup")
@@ -47,14 +50,23 @@ async def startup_event():
     logger.info("서버 시작 중...")
 
     try:
-        # 모델 로드 - 싱글톤 인스턴스를 생성하여 메모리에 로드합니다
-        model_provider = LlamaModelProvider()
-        model_info = get_model_info()
+        # SLLM 모델 로드 - 싱글톤 인스턴스를 생성하여 메모리에 로드합니다
+        sllm_provider = LlamaModelProvider()
+        sllm_info = get_model_info()
 
-        if model_info["model_loaded"]:
-            logger.info(f"모델 로드 성공! 로드 시간: {model_info['model_load_time']:.2f}초")
+        if sllm_info["model_loaded"]:
+            logger.info(f"SLLM 모델 로드 성공! 로드 시간: {sllm_info['model_load_time']:.2f}초")
         else:
-            logger.warning("모델 로드 실패! 테스트 모드로 실행됩니다.")
+            logger.warning("SLLM 모델 로드 실패! 테스트 모드로 실행됩니다.")
+
+        # Vision 모델 로드
+        vision_provider = VisionModelProvider()
+        vision_info = get_vision_model_info()
+
+        if vision_info["model_loaded"]:
+            logger.info(f"Vision 모델 로드 성공! 로드 시간: {vision_info['model_load_time']:.2f}초")
+        else:
+            logger.warning("Vision 모델 로드 실패! 테스트 모드로 실행됩니다.")
     except Exception as e:
         logger.error(f"서버 시작 중 오류 발생: {str(e)}")
         raise HTTPException(status_code=500, detail=f"서버 시작 실패: {str(e)}")
@@ -73,9 +85,17 @@ async def root():
 @app.get("/health")
 async def health_check():
     """헬스 체크 엔드포인트"""
-    model_info = get_model_info()
+    sllm_info = get_model_info()
+    vision_info = get_vision_model_info()
+
     return {
         "status": "healthy",
-        "model_loaded": model_info["model_loaded"],
-        "model_load_time": model_info["model_load_time"],
+        "sllm_model": {
+            "loaded": sllm_info["model_loaded"],
+            "load_time": sllm_info["model_load_time"],
+        },
+        "vision_model": {
+            "loaded": vision_info["model_loaded"],
+            "load_time": vision_info["model_load_time"],
+        }
     }
