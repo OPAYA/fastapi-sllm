@@ -31,3 +31,5 @@ class ModelProvider(ABC):
     def close(self) -> None:
         """모델 리소스를 해제합니다."""
         pass
+
+
