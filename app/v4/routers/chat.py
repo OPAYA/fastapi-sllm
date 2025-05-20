@@ -6,9 +6,9 @@ import logging
 import uuid
 from pydantic import BaseModel, Field
 
-from ..services.chat_history import chat_history
-from ..services.chat_service import ChatService
-from ..dependencies import get_chat_service
+from app.v4.services.chat_history import chat_history
+from app.v4.services.chat_service import ChatService
+from app.v4.dependencies import get_chat_service
 
 router = APIRouter()
 settings = get_settings()
@@ -40,6 +40,7 @@ class ChatRequest(BaseModel):
                 "message": "Hello, how are you?"
             }
         }
+
 
 class ChatResponse(BaseModel):
     conversation_id: str = Field(..., description="대화 ID")
