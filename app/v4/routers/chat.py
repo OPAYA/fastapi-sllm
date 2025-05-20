@@ -36,7 +36,7 @@ class ChatRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "conversation_id": None,
+                "conversation_id": "conv-123",
                 "message": "Hello, how are you?"
             }
         }

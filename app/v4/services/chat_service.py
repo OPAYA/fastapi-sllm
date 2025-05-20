@@ -3,7 +3,9 @@ from app.v4.services.sllm_service import SLLMService
 import uuid
 import json
 import logging
+from datetime import datetime
 from ..services.chat_history import chat_history
+from app.v3.models.chat import Message, MessageRole, ChatResponse
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +25,32 @@ class ChatService:
 
     async def process_chat(self, conversation_id: str, message: str) -> str:
         # 대화 기록 가져오기
-        history = chat_history.get_conversation(conversation_id)
+        history = chat_history.get_conversation(conversation_id) or []
 
         # 메시지 포맷 변환
         messages = [
-            {"role": msg["role"], "content": msg["content"]}
+            Message(
+                role=MessageRole(msg["role"]),
+                content=msg["content"],
+                timestamp=datetime.fromisoformat(msg.get("timestamp", datetime.utcnow().isoformat()))
+            )
             for msg in history
         ]
 
         # 현재 메시지 추가
-        messages.append({"role": "user", "content": message})
+        messages.append(
+            Message(
+                role=MessageRole.USER,
+                content=message,
+                timestamp=datetime.utcnow()
+            )
+        )
 
         # LLM 호출
-        response = await self.sllm_service.generate_response(messages)
+        response: ChatResponse = await self.sllm_service.generate_response(messages)
 
-        return response
+        # 마지막 메시지의 content 반환
+        return response.messages[-1].content
 
     async def process_chat_with_history(self, conversation_id: str, message: str) -> Dict:
         # 사용자 메시지 기록
@@ -50,12 +63,23 @@ class ChatService:
         chat_history.add_message(conversation_id, "assistant", response)
 
         # 전체 대화 기록 반환
-        history = chat_history.get_conversation(conversation_id)
+        history = chat_history.get_conversation(conversation_id) or []
 
+        # ChatResponse 형식으로 변환
         return {
             "conversation_id": conversation_id,
+            "messages": [
+                Message(
+                    role=MessageRole(msg["role"]),
+                    content=msg["content"],
+                    timestamp=datetime.fromisoformat(msg.get("timestamp", datetime.utcnow().isoformat()))
+                )
+                for msg in history
+            ],
             "response": response,
-            "history": history
+            "history": history,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
         }
 
     async def process_chat_stream(
@@ -75,7 +99,11 @@ class ChatService:
 
             # 메시지 포맷 변환
             messages = [
-                {"role": msg["role"], "content": msg["content"]}
+                Message(
+                    role=MessageRole(msg["role"]),
+                    content=msg["content"],
+                    timestamp=datetime.fromisoformat(msg.get("timestamp", datetime.utcnow().isoformat()))
+                )
                 for msg in history
             ]
 
