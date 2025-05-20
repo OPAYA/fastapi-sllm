@@ -35,14 +35,6 @@ ENV/
 .DS_Store
 
 # Project specific
-models/*
-*.onnx
-*.gguf
-*.bin
-*.pt
-*.pth
-*.ckpt
-*.safetensors
 
 # Logs
 *.log

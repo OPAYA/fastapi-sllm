@@ -217,3 +217,16 @@ print(f"모델 다운로드가 완료되었습니다. 저장 위치: {download_p
 ```bash
 echo "HUGGINGFACE_TOKEN=your_token_here" >> .env
 ```
+
+## 모델 설치
+
+### 모델 다운로드
+1. [Google Drive 링크](https://drive.google.com/drive/folders/1kVT6YZZeRZGPWpPE9ZNzaPTbGkQdacqi?usp=sharing)에서 다음 모델 파일들을 다운로드하세요:
+   - `onnx_qwen25.onnx`
+   - `phi-2-q4_k_m.gguf`
+
+2. 프로젝트 루트 디렉토리에 `models` 폴더를 생성하고 다운로드한 모델 파일들을 이 폴더에 넣으세요:
+```bash
+mkdir models
+# 다운로드한 모델 파일들을 models/ 폴더로 이동
+```
