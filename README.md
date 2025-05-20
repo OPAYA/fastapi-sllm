@@ -172,3 +172,48 @@ v3 API부터는 다양한 용도의 프롬프트 템플릿을 지원합니다:
 - **therapy_assistant.json**: 심리 상담용 템플릿
 - **creative_writer.json**: 창작 도우미 템플릿
 - **sql_assistant.json**: SQL 도우미 템플릿
+
+## HyperCLOVAX 모델 다운로드
+
+HyperCLOVAX Vision 모델을 다운로드하려면 다음 Python 코드를 실행하세요:
+
+```python
+from huggingface_hub import login, snapshot_download
+import os
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
+
+# 환경 변수에서 토큰 가져오기
+token = os.getenv("HUGGINGFACE_TOKEN")
+if not token:
+    raise ValueError("HUGGINGFACE_TOKEN 환경 변수가 설정되지 않았습니다. .env 파일에 토큰을 설정해주세요.")
+
+# Hugging Face 토큰으로 로그인
+login(token=token)
+
+# 모델 다운로드 경로 설정
+download_path = "./hyperclovax_vision_3b"
+
+# 디렉토리가 없으면 생성
+if not os.path.exists(download_path):
+    os.makedirs(download_path)
+
+print("HyperCLOVAX Vision 모델 다운로드를 시작합니다...")
+
+# 모델 다운로드
+snapshot_download(
+    repo_id="naver-hyperclovax/HyperCLOVAX-SEED-Vision-Instruct-3B",
+    local_dir=download_path,
+    local_dir_use_symlinks=False
+)
+
+print(f"모델 다운로드가 완료되었습니다. 저장 위치: {download_path}")
+```
+
+이 코드를 실행하기 전에 `.env` 파일에 Hugging Face 토큰을 설정해야 합니다:
+
+```bash
+echo "HUGGINGFACE_TOKEN=your_token_here" >> .env
+```
