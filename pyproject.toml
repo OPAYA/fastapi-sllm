@@ -15,6 +15,11 @@ httpx = "^0.25.0"
 python-multipart = "^0.0.6"
 llama-cpp-python = "^0.3.8"
 pydantic-settings = "^2.8.1"
+transformers = "^4.38.0"
+safetensors = "^0.4.2"
+torch = "^2.2.0"
+pillow = "^10.2.0"
+requests = "^2.31.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.3"
